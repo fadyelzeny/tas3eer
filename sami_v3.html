@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سامي الزيني — نظام التسعير</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f0f0f0;--bg2:#e4e4e4;--bg3:#d8d8d8;
+  --panel:#f7f7f7;--white:#fff;
+  --border:#c8c8c8;--border2:#b0b0b0;
+  --text:#1a1a1a;--text2:#555;--text3:#888;
+  --accent:#F47920;--accent2:#d4651a;
+  --blue:#2a6db5;--green:#2e7d32;--red:#c62828;
+  --sw:210px;
+}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;font-size:13px;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+
+/* TITLEBAR */
+#titlebar{height:32px;background:linear-gradient(180deg,#4a7ab5,#2a5a95);display:flex;align-items:center;justify-content:space-between;padding:0 8px;color:#fff;font-size:12px;font-weight:500;user-select:none;}
+.wb{width:16px;height:14px;border-radius:2px;border:none;cursor:pointer;font-size:9px;}
+
+/* TOOLBAR */
+#toolbar{height:36px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:2px;padding:0 6px;flex-wrap:nowrap;overflow-x:auto;}
+.tb-btn{height:26px;padding:0 8px;border:1px solid transparent;background:transparent;cursor:pointer;border-radius:3px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text);white-space:nowrap;flex-shrink:0;}
+.tb-btn:hover{background:var(--white);border-color:var(--border2);}
+.tb-sep{width:1px;height:20px;background:var(--border2);margin:0 2px;flex-shrink:0;}
+
+/* AI BAR - ثابت تحت التولبار */
+#ai-bar{background:#1e3a5f;padding:6px 10px;display:flex;align-items:center;gap:6px;border-bottom:2px solid var(--accent);}
+#ai-bar .ai-label{color:#adc8e8;font-size:11px;white-space:nowrap;flex-shrink:0;}
+#ai-input{flex:1;height:28px;padding:3px 8px;border:1px solid #3a6a9f;border-radius:4px;font-size:12px;font-family:inherit;background:#0d2440;color:#fff;direction:rtl;min-width:0;}
+#ai-input::placeholder{color:#6a8aaf;}
+#ai-input:focus{outline:none;border-color:var(--accent);}
+#mic-btn{height:28px;width:32px;border:1px solid #3a6a9f;border-radius:4px;background:#0d2440;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+#mic-btn:hover{background:#1a3a60;}
+#mic-btn.rec{background:#7f0000;border-color:#c62828;animation:pulse 1s infinite;}
+#ai-send{height:28px;padding:0 12px;border:none;border-radius:4px;background:var(--accent);color:#fff;cursor:pointer;font-size:12px;flex-shrink:0;}
+#ai-send:hover{background:var(--accent2);}
+#ai-status{font-size:11px;color:#adc8e8;min-width:80px;text-align:center;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+#sidebar{width:var(--sw);background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.tree-hd{padding:5px 8px;background:var(--bg2);font-size:11px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border);}
+.tree-scroll{overflow-y:auto;flex:1;}
+.folder-lbl{padding:5px 8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--border);background:var(--bg2);user-select:none;}
+.folder-lbl:hover{background:var(--bg3);}
+.folder-lbl .arr{margin-left:auto;font-size:9px;transition:.2s;}
+.folder.open .arr{transform:rotate(90deg);}
+.folder-ch{display:none;}
+.folder.open .folder-ch{display:block;}
+.tree-node{padding:5px 8px 5px 20px;cursor:pointer;font-size:12px;color:var(--text);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+.tree-node:hover{background:#e8f0fa;color:var(--blue);}
+.tree-node.active{background:#dceeff;color:var(--blue);font-weight:600;border-right:3px solid var(--blue);}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.summary{padding:8px 10px;font-size:11px;color:var(--text2);line-height:1.9;border-top:1px solid var(--border);}
+
+/* CONTENT */
+#content{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--white);}
+#tabs{height:30px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:flex-end;padding:0 8px;gap:2px;}
+.tab{padding:5px 14px;cursor:pointer;font-size:12px;background:var(--bg3);border:1px solid var(--border);border-bottom:none;border-radius:4px 4px 0 0;color:var(--text2);}
+.tab.active{background:var(--white);color:var(--text);font-weight:600;border-bottom:1px solid var(--white);margin-bottom:-1px;}
+.panel{display:none;flex:1;overflow-y:auto;padding:14px;}
+.panel.active{display:block;}
+
+/* FORM */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 14px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px 14px;}
+.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
+.fg label{font-size:11px;color:var(--text2);font-weight:500;}
+input[type=text],input[type=number],select,textarea{height:26px;padding:3px 7px;border:1px solid var(--border2);border-radius:3px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text);direction:rtl;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);}
+textarea{height:auto;resize:vertical;}
+
+/* BOX */
+.box{border:1px solid var(--border);border-radius:4px;margin-bottom:12px;overflow:hidden;}
+.box-hd{padding:6px 10px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:space-between;}
+.box-bd{padding:12px;}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{background:var(--bg2);padding:5px 8px;border:1px solid var(--border);text-align:right;font-weight:600;font-size:11px;color:var(--text2);}
+.tbl td{padding:5px 8px;border:1px solid var(--border);}
+.tbl tr:hover td{background:#f5f8ff;}
+.tbl input,.tbl select{width:100%;height:22px;border:none;background:transparent;font-size:11px;}
+.tbl input:focus,.tbl select:focus{background:#fff8e1;border-radius:2px;outline:none;}
+
+/* RESULTS */
+.res{background:#f0f7ff;border:1px solid #bdd6f5;border-radius:4px;padding:12px;margin-top:10px;}
+.rr{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text2);border-bottom:1px dashed var(--border);}
+.rr:last-child{border:none;}
+.rf{display:flex;justify-content:space-between;padding:8px 0 4px;font-size:14px;font-weight:700;}
+.profit{color:var(--green);}
+.loss{color:var(--red);}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600;}
+.bg-g{background:#e8f5e9;color:var(--green);border:1px solid #a5d6a7;}
+.bg-o{background:#fff3e0;color:var(--accent);border:1px solid #ffcc80;}
+.bg-r{background:#ffebee;color:var(--red);border:1px solid #ef9a9a;}
+
+/* BUTTONS */
+.btn{padding:5px 14px;border:1px solid var(--border2);border-radius:3px;cursor:pointer;font-size:12px;font-family:inherit;background:var(--bg2);color:var(--text);}
+.btn:hover{background:var(--bg3);}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-p:hover{background:#1e5da0;}
+.btn-a{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-a:hover{background:var(--accent2);}
+.btn-sm{padding:2px 8px;font-size:11px;}
+.btn-d{background:#ffebee;color:var(--red);border-color:#ef9a9a;}
+.btn-row{display:flex;gap:6px;margin-top:10px;}
+
+/* MATERIALS */
+.mat-row{display:grid;grid-template-columns:1fr 1fr 110px 70px;gap:5px;align-items:center;padding:4px 8px;border:1px solid var(--border);border-radius:3px;margin-bottom:3px;background:var(--white);}
+.mat-row:hover{background:#f5f8ff;}
+.mat-row input{height:24px;}
+.mat-sec h3{font-size:13px;font-weight:600;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid var(--accent);}
+.mat-sec{margin-bottom:18px;}
+.mat-col-hd{display:grid;grid-template-columns:1fr 1fr 110px 70px;gap:5px;padding:2px 8px;font-size:10px;color:var(--text3);font-weight:600;margin-bottom:2px;}
+
+/* STATUS */
+#statusbar{height:22px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 10px;font-size:11px;color:var(--text2);}
+.ss{padding:0 10px;border-left:1px solid var(--border);}
+.ss:first-child{border:none;}
+
+/* MISSING FIELD */
+.missing{border-color:var(--red) !important;box-shadow:0 0 0 2px rgba(198,40,40,.15);}
+.missing-star{color:var(--red);font-size:11px;font-weight:700;margin-right:2px;}
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="background:var(--accent);width:14px;height:14px;border-radius:2px;display:inline-block;"></span>
+    سامي الزيني للدعاية والإعلان — نظام التسعير
+  </div>
+  <div style="display:flex;gap:3px;">
+    <button class="wb" style="background:#f9a825;">─</button>
+    <button class="wb" style="background:#4caf50;">□</button>
+    <button class="wb" style="background:#ef5350;" onclick="if(confirm('إغلاق؟'))window.close()">✕</button>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <button class="tb-btn" onclick="newFile()">📄 جديد</button>
+  <button class="tb-btn" onclick="openFile()">📂 فتح</button>
+  <button class="tb-btn" onclick="saveFile()">💾 حفظ</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="openTab('materials')" style="color:var(--accent)">🗃️ الخامات</button>
+  <button class="tb-btn" onclick="openTab('quote')">🧾 عرض السعر</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="printQuote()">🖨️ طباعة</button>
+  <div class="tb-sep"></div>
+  <span style="font-size:11px;color:var(--text2);padding:0 4px;">مشروع:</span>
+  <span id="current-file" style="font-size:11px;color:var(--text2);padding:2px 8px;background:var(--white);border:1px solid var(--border);border-radius:3px;">بدون اسم</span>
+</div>
+
+<!-- AI BAR -->
+<div id="ai-bar">
+  <span class="ai-label">🤖 المساعد:</span>
+  <button id="mic-btn" onclick="toggleMic()" title="تحدث بالعربي">🎤</button>
+  <input id="ai-input" type="text" placeholder='قل أو اكتب: "كلادينج 30م² لشركة النور بسعر 1800" أو "غير سعر تكنوبوند لـ 1400"' onkeydown="if(event.key==='Enter')sendAI()">
+  <button id="ai-send" onclick="sendAI()">إرسال ←</button>
+  <span id="ai-status">جاهز</span>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="tree-hd">📁 المشاريع والبنود</div>
+  <div class="tree-scroll" id="tree-scroll"></div>
+  <div class="summary">
+    <div>التكلفة: <strong id="s-cost" style="color:var(--red)">—</strong></div>
+    <div>سعر العميل: <strong id="s-sell" style="color:var(--accent)">—</strong></div>
+    <div style="border-top:1px solid var(--border);padding-top:4px;margin-top:4px;">
+      الربح: <strong id="s-profit">—</strong>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+  <div id="tabs">
+    <div class="tab active" id="tab-home" onclick="openTab('home')">الرئيسية</div>
+    <div class="tab" id="tab-materials" onclick="openTab('materials')">🗃️ الخامات</div>
+    <div class="tab" id="tab-quote" onclick="openTab('quote')">🧾 عرض السعر</div>
+  </div>
+
+  <!-- HOME -->
+  <div class="panel active" id="panel-home">
+    <div style="text-align:center;padding:40px 20px;color:var(--text2);">
+      <div style="font-size:40px;margin-bottom:12px;">🏗️</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px;">سامي الزيني للدعاية والإعلان</div>
+      <div style="font-size:12px;margin-bottom:6px;">اختر بنداً من الشجرة أو تكلم مع المساعد فوق</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:24px;">مثال: "اتفقت مع شركة النور على كلادينج 30 متر بسعر 1800"</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-p" onclick="openNode('cladding')">كلادينج ACM</button>
+        <button class="btn" onclick="openNode('forex')">لوحة بلاستيك Forex</button>
+        <button class="btn" onclick="openNode('stainless')">ستانلس</button>
+        <button class="btn" onclick="openNode('letters_acr')">حروف أكريليك</button>
+        <button class="btn btn-a" onclick="openTab('materials')">🗃️ إدارة الخامات</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATERIALS -->
+  <div class="panel" id="panel-materials">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-size:15px;font-weight:600;">🗃️ إدارة الخامات والأسعار</div>
+      <div style="font-size:11px;color:var(--text3);">التعديلات تنعكس فوراً — يمكن تعديلها بالمساعد الذكي</div>
+    </div>
+
+    <div class="mat-sec">
+      <h3>🟦 كلادينج ACM</h3>
+      <div class="mat-col-hd"><span>اسم الخامة</span><span>ملاحظة</span><span>سعر المتر (ج.م)</span><span></span></div>
+      <div id="mat-cladding"></div>
+      <button class="btn btn-sm" onclick="addMat('cladding')" style="margin-top:5px;">+ إضافة</button>
+    </div>
+
+    <div class="mat-sec">
+      <h3>🟧 لوحة بلاستيك / Forex</h3>
+      <div class="mat-col-hd"><span>اسم الخامة</span><span>ملاحظة</span><span>سعر المتر (ج.م)</span><span></span></div>
+      <div id="mat-forex"></div>
+      <button class="btn btn-sm" onclick="addMat('forex')" style="margin-top:5px;">+ إضافة</button>
+    </div>
+
+    <div class="mat-sec">
+      <h3>⚙️ ستانلس / حديد</h3>
+      <div class="mat-col-hd"><span>النوع</span><span>المواصفات</span><span>سعر العود/م (ج.م)</span><span></span></div>
+      <div id="mat-iron"></div>
+      <button class="btn btn-sm" onclick="addMat('iron')" style="margin-top:5px;">+ إضافة</button>
+    </div>
+
+    <div class="mat-sec">
+      <h3>🔵 أكريليك</h3>
+      <div class="mat-col-hd"><span>النوع</span><span>السماكة/اللون</span><span>سعر اللوح كامل (ج.م)</span><span></span></div>
+      <div id="mat-acrylic"></div>
+      <button class="btn btn-sm" onclick="addMat('acrylic')" style="margin-top:5px;">+ إضافة</button>
+    </div>
+
+    <div class="mat-sec">
+      <h3>🟫 خشب</h3>
+      <div class="mat-col-hd"><span>النوع</span><span>المقاس</span><span>سعر اللوح كامل (ج.م)</span><span></span></div>
+      <div id="mat-wood"></div>
+      <button class="btn btn-sm" onclick="addMat('wood')" style="margin-top:5px;">+ إضافة</button>
+    </div>
+
+    <div class="mat-sec">
+      <h3>💡 ليد ومحولات</h3>
+      <div class="g4" style="max-width:600px;">
+        <div class="fg"><label>سعر الليدة (ج.م)</label><input type="number" id="mat-led" value="4" min="0" step="0.5" oninput="refreshCalcs()"></div>
+        <div class="fg"><label>سعر المحول (ج.م)</label><input type="number" id="mat-trans" value="120" min="0" step="10" oninput="refreshCalcs()"></div>
+        <div class="fg"><label>سعر متر الأسلاك (ج.م)</label><input type="number" id="mat-wire" value="15" min="0" oninput="refreshCalcs()"></div>
+        <div class="fg"><label>ليدات لكل محول</label><input type="number" id="mat-lpm" value="250" min="50" step="50" oninput="refreshCalcs()"></div>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn btn-p" onclick="setStatus('تم حفظ الخامات ✓')">💾 حفظ الخامات</button></div>
+  </div>
+
+  <!-- GENERIC PANEL (كلادينج، forex، ستانلس) -->
+  <div class="panel" id="panel-cladding"><div id="inner-cladding"></div></div>
+  <div class="panel" id="panel-forex"><div id="inner-forex"></div></div>
+  <div class="panel" id="panel-stainless"><div id="inner-stainless"></div></div>
+
+  <!-- LETTERS ACRYLIC -->
+  <div class="panel" id="panel-letters_acr">
+    <div class="box">
+      <div class="box-hd">📐 حروف بارزة أكريليك</div>
+      <div class="box-bd">
+        <div class="g3">
+          <div class="fg"><label>اسم العميل</label><input type="text" id="la-client" oninput="updateTitle()"></div>
+          <div class="fg"><label>متر طولي</label><input type="number" id="la-meters" min="0" step="0.5" oninput="calcLA()"></div>
+          <div class="fg"><label>الارتفاع (سم) — أقصى 60</label><input type="number" id="la-height" value="60" min="10" max="60" oninput="calcLA()"></div>
+        </div>
+        <div class="g3">
+          <div class="fg"><label>سعر البيع للعميل (ج.م/م)</label><input type="number" id="la-sell" min="0" step="100" oninput="calcLA()"></div>
+          <div class="fg"><label>عدد ألواح أكريليك (من Deepnest)</label><input type="number" id="la-sheets" min="0" oninput="calcLA()"></div>
+          <div class="fg"><label>نسبة استهلاك الأكريليك (%)</label><input type="number" id="la-acrpct" value="75" min="1" max="100" oninput="calcLA()"></div>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <div class="box-hd">💰 تكلفة المتر الطولي</div>
+      <div class="box-bd">
+        <table class="tbl">
+          <thead><tr><th style="width:20%">البند</th><th style="width:28%">الاختيار</th><th style="width:16%">السعر</th><th>تفاصيل</th></tr></thead>
+          <tbody>
+            <tr><td><strong>أكريليك</strong></td><td><select id="la-acr-sel" onchange="calcLA()" style="width:100%;height:22px;font-size:11px;"></select></td><td id="la-acr-sp" style="font-size:11px;">—</td><td id="la-acr-calc" style="font-size:11px;color:var(--text3);">—</td></tr>
+            <tr><td><strong>خشب</strong></td><td><select id="la-wood-sel" onchange="calcLA()" style="width:100%;height:22px;font-size:11px;"></select></td><td id="la-wood-sp" style="font-size:11px;">—</td>
+              <td><div style="display:flex;align-items:center;gap:4px;"><span style="font-size:11px;color:var(--text3);">استهلاك:</span><input type="number" id="la-woodpct" value="60" min="1" max="100" style="width:50px;height:22px;" oninput="calcLA()"><span style="font-size:11px;color:var(--text3);">%</span><span id="la-wood-calc" style="font-size:11px;margin-right:6px;">—</span></div></td></tr>
+            <tr><td><strong>ليد</strong></td><td style="font-size:11px;color:var(--text3);">من الخامات</td><td id="la-led-unit" style="font-size:11px;">—</td>
+              <td><div style="display:flex;align-items:center;gap:4px;"><input type="number" id="la-led-total" value="0" min="0" style="width:70px;height:22px;" oninput="calcLA()" placeholder="إجمالي الليدات"><span style="font-size:11px;color:var(--text3);">ليدة ←</span><span id="la-led-calc" style="font-size:11px;">—</span></div></td></tr>
+            <tr><td><strong>محولات</strong></td><td id="la-trans-rule" style="font-size:11px;color:var(--text3);">1/250 ليدة</td><td id="la-trans-unit" style="font-size:11px;">—</td><td id="la-trans-calc" style="font-size:11px;">—</td></tr>
+            <tr><td><strong>أسلاك</strong></td><td style="font-size:11px;color:var(--text3);">من الخامات</td><td id="la-wire-unit" style="font-size:11px;">—</td>
+              <td><div style="display:flex;align-items:center;gap:4px;"><input type="number" id="la-wire-pm" value="2" min="0" step="0.5" style="width:50px;height:22px;" oninput="calcLA()"><span style="font-size:11px;color:var(--text3);">م/م ←</span><span id="la-wire-calc" style="font-size:11px;">—</span></div></td></tr>
+            <tr><td><strong>مصنعيات</strong></td><td style="font-size:11px;color:var(--text3);">قص+تجميع+تركيب</td><td><input type="number" id="la-labor" value="600" min="0" oninput="calcLA()"></td><td style="font-size:11px;color:var(--text3);">للمتر الطولي</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="res">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px;">📊 النتيجة</div>
+      <div class="rr"><span>إجمالي الليدات</span><span id="la-leds">—</span></div>
+      <div class="rr"><span>عدد المحولات</span><span id="la-trans">—</span></div>
+      <div class="rr"><span>تكلفة المتر الطولي</span><span id="la-cpm">—</span></div>
+      <div class="rr"><span>إجمالي التكلفة</span><span id="la-tcost">—</span></div>
+      <div class="rr"><span>سعر البيع الإجمالي</span><span id="la-tsell">—</span></div>
+      <div class="rf"><span>الربح</span><span id="la-profit">—</span></div>
+      <div style="margin-top:6px;text-align:left"><span id="la-badge"></span></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-p" onclick="transferToQuote('letters_acr')">نقل لعرض السعر ←</button></div>
+  </div>
+
+  <!-- QUOTE -->
+  <div class="panel" id="panel-quote">
+    <div class="box">
+      <div class="box-hd">🧾 بيانات العرض</div>
+      <div class="box-bd">
+        <div class="g3">
+          <div class="fg"><label>اسم العميل</label><input type="text" id="q-client"></div>
+          <div class="fg"><label>التاريخ</label><input type="text" id="q-date"></div>
+          <div class="fg"><label>رقم العرض</label><input type="text" id="q-num"></div>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <div class="box-hd"><span>📋 البنود</span><button class="btn btn-sm" onclick="addQItem()">+ بند</button></div>
+      <div class="box-bd" style="padding:0;">
+        <table class="tbl">
+          <thead><tr><th style="width:38%">الوصف</th><th style="width:13%">الكمية</th><th style="width:10%">الوحدة</th><th style="width:15%">سعر الوحدة</th><th style="width:13%">الإجمالي</th><th style="width:6%">↑↓</th><th style="width:5%">✕</th></tr></thead>
+          <tbody id="q-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="g2" style="margin-bottom:12px;">
+      <div class="fg"><label>خصم (%)</label><input type="number" id="q-disc" value="0" min="0" max="100" oninput="calcQ()"></div>
+      <div class="fg"><label>ملاحظات وشروط</label><textarea id="q-notes" rows="3" placeholder="مثال: الأسعار شاملة التركيب — صلاحية العرض 15 يوم — 50% مقدم"></textarea></div>
+    </div>
+    <div class="res">
+      <div class="rr"><span>الإجمالي</span><span id="q-sub">0 ج.م</span></div>
+      <div class="rr" id="q-disc-row" style="display:none"><span>خصم</span><span id="q-disc-val" style="color:var(--green)">—</span></div>
+      <div class="rf"><span>الإجمالي النهائي</span><span id="q-grand">0 ج.م</span></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-a" onclick="printQuote()">🖨️ طباعة عرض السعر</button></div>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+
+<div id="statusbar">
+  <span class="ss" id="st-mode">الرئيسية</span>
+  <span class="ss" id="st-proj">مشروع جديد</span>
+  <span class="ss" id="st-msg">جاهز</span>
+  <span class="ss" style="margin-right:auto;">سامي الزيني للدعاية والإعلان — بورسعيد 1985</span>
+</div>
+
+<script>
+// ===================== STATE =====================
+let mats = {
+  cladding:[
+    {name:'تكنوبوند',note:'ألماني',price:1300},
+    {name:'سعودي بوند',note:'',price:950},
+    {name:'كوريان بوند',note:'متوسط',price:800},
+    {name:'اقتصادي',note:'محلي',price:600},
+  ],
+  forex:[
+    {name:'Forex 5مم',note:'أبيض',price:280},
+    {name:'Forex 10مم',note:'أبيض',price:450},
+  ],
+  iron:[
+    {name:'علبة 2سم',note:'سمك 1.2مم',price:170},
+    {name:'علبة 3سم',note:'سمك 1.5مم',price:210},
+    {name:'علبة 4سم',note:'سمك 2مم',price:280},
+  ],
+  acrylic:[
+    {name:'أكريليك شفاف',note:'3مم',price:2200},
+    {name:'أكريليك أبيض',note:'5مم',price:3000},
+    {name:'أكريليك ملون',note:'5مم',price:3500},
+  ],
+  wood:[
+    {name:'كونتر طبقات',note:'18مم',price:420},
+    {name:'MDF',note:'18مم',price:280},
+  ],
+};
+
+// بيانات كل بند متر مربع
+let panelData = {
+  cladding: {client:'',area:0,sell:0,matIdx:0,ironIdx:0,matQty:0,ironQty:0,labor:500,misc:50},
+  forex:    {client:'',area:0,sell:0,matIdx:0,ironIdx:0,matQty:0,ironQty:0,labor:300,misc:30},
+  stainless:{client:'',area:0,sell:0,matIdx:0,ironIdx:0,matQty:0,ironQty:0,labor:800,misc:50},
+};
+
+let panelCosts = {cladding:0, forex:0, stainless:0, letters_acr:0};
+let quoteItems = [];
+
+// ===================== TREE =====================
+const TREE = [
+  {id:'surfaces', label:'🏢 أرضيات وواجهات', nodes:[
+    {id:'cladding',   label:'كلادينج ACM',       color:'#2a6db5'},
+    {id:'forex',      label:'لوحة بلاستيك Forex', color:'#e65100'},
+    {id:'stainless',  label:'ستانلس',             color:'#607d8b'},
+  ]},
+  {id:'letters3d', label:'🔤 حروف 3D', nodes:[
+    {id:'letters_acr',label:'أكريليك',            color:'#F47920'},
+  ]},
+];
+
+function buildTree() {
+  const sc = document.getElementById('tree-scroll');
+  sc.innerHTML = '';
+  TREE.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'folder open';
+    div.id = 'folder-' + f.id;
+    div.innerHTML = `<div class="folder-lbl" onclick="toggleFolder('${f.id}')">${f.label}<span class="arr">▶</span></div>`;
+    const ch = document.createElement('div');
+    ch.className = 'folder-ch';
+    f.nodes.forEach(n => {
+      const nd = document.createElement('div');
+      nd.className = 'tree-node';
+      nd.id = 'node-' + n.id;
+      nd.innerHTML = `<span class="dot" style="background:${n.color}"></span>${n.label}`;
+      nd.onclick = () => openNode(n.id);
+      ch.appendChild(nd);
+    });
+    div.appendChild(ch);
+    sc.appendChild(div);
+  });
+}
+
+function toggleFolder(id) {
+  document.getElementById('folder-'+id).classList.toggle('open');
+}
+
+function openNode(id) {
+  document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('active'));
+  const nd = document.getElementById('node-'+id);
+  if (nd) nd.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  const labels = {cladding:'كلادينج ACM', forex:'لوحة بلاستيك', stainless:'ستانلس', letters_acr:'حروف أكريليك'};
+  document.getElementById('st-mode').textContent = labels[id]||id;
+  // بناء الباقي
+  if (['cladding','forex','stainless'].includes(id)) buildGenericPanel(id);
+  if (id === 'letters_acr') refreshLASelects();
+}
+
+// ===================== GENERIC PANEL (م²) =====================
+const PANEL_CONFIG = {
+  cladding:  {title:'كلادينج ACM', matType:'cladding', icon:'🟦'},
+  forex:     {title:'لوحة بلاستيك Forex', matType:'forex', icon:'🟧'},
+  stainless: {title:'ستانلس', matType:'iron', icon:'⚙️'},
+};
+
+function buildGenericPanel(id) {
+  const cfg = PANEL_CONFIG[id];
+  const d = panelData[id];
+  const matOpts = mats[cfg.matType].map((m,i)=>`<option value="${i}" ${i==d.matIdx?'selected':''}>${m.name}${m.note?' — '+m.note:''}</option>`).join('');
+  const ironOpts = mats.iron.map((m,i)=>`<option value="${i}" ${i==d.ironIdx?'selected':''}>${m.name}${m.note?' / '+m.note:''}</option>`).join('');
+
+  document.getElementById('inner-'+id).innerHTML = `
+    <div class="box">
+      <div class="box-hd">${cfg.icon} ${cfg.title} — بيانات المشروع</div>
+      <div class="box-bd">
+        <div class="g3">
+          <div class="fg"><label>اسم العميل</label><input type="text" id="${id}-client" value="${d.client}" oninput="panelData['${id}'].client=this.value;updateTitle()"></div>
+          <div class="fg"><label>المساحة (م²)</label><input type="number" id="${id}-area" value="${d.area||''}" min="0" step="0.5" oninput="panelData['${id}'].area=+this.value;calcGeneric('${id}')"></div>
+          <div class="fg"><label>سعر البيع للعميل (ج.م/م²)</label><input type="number" id="${id}-sell" value="${d.sell||''}" min="0" step="50" oninput="panelData['${id}'].sell=+this.value;calcGeneric('${id}')"></div>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <div class="box-hd">💰 تكلفة المتر المربع (داخلي)</div>
+      <div class="box-bd">
+        <table class="tbl">
+          <thead><tr><th style="width:22%">البند</th><th style="width:28%">الاختيار</th><th style="width:16%">سعر الوحدة</th><th style="width:17%">الكمية الفعلية</th><th>الإجمالي</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>الخامة</strong></td>
+              <td><select id="${id}-mat-sel" onchange="panelData['${id}'].matIdx=+this.value;document.getElementById('${id}-mat-price').value=mats['${cfg.matType}'][+this.value].price;calcGeneric('${id}')" style="width:100%;height:22px;font-size:11px;">${matOpts}</select></td>
+              <td><input type="number" id="${id}-mat-price" value="${mats[cfg.matType][d.matIdx].price}" min="0" oninput="calcGeneric('${id}')"></td>
+              <td><input type="number" id="${id}-mat-qty" value="${d.matQty||''}" min="0" step="0.5" placeholder="م²" oninput="panelData['${id}'].matQty=+this.value;calcGeneric('${id}')"></td>
+              <td id="${id}-mat-total" style="font-size:11px;">—</td>
+            </tr>
+            <tr>
+              <td><strong>الحديد</strong></td>
+              <td><select id="${id}-iron-sel" onchange="panelData['${id}'].ironIdx=+this.value;document.getElementById('${id}-iron-price').value=mats.iron[+this.value].price;calcGeneric('${id}')" style="width:100%;height:22px;font-size:11px;">${ironOpts}</select></td>
+              <td><input type="number" id="${id}-iron-price" value="${mats.iron[d.ironIdx].price}" min="0" oninput="calcGeneric('${id}')"></td>
+              <td><input type="number" id="${id}-iron-qty" value="${d.ironQty||''}" min="0" placeholder="عيدان" oninput="panelData['${id}'].ironQty=+this.value;calcGeneric('${id}')"></td>
+              <td id="${id}-iron-total" style="font-size:11px;">—</td>
+            </tr>
+            <tr>
+              <td><strong>مصنعيات</strong></td>
+              <td style="font-size:11px;color:var(--text3);">حداد + تفريز + تركيب</td>
+              <td><input type="number" id="${id}-labor" value="${d.labor}" min="0" oninput="panelData['${id}'].labor=+this.value;calcGeneric('${id}')"></td>
+              <td style="font-size:11px;color:var(--text3);">—</td>
+              <td style="font-size:11px;color:var(--text3);">للمتر المربع</td>
+            </tr>
+            <tr>
+              <td><strong>متنوع</strong></td>
+              <td style="font-size:11px;color:var(--text3);">سلك، براغي، إلخ</td>
+              <td><input type="number" id="${id}-misc" value="${d.misc}" min="0" oninput="panelData['${id}'].misc=+this.value;calcGeneric('${id}')"></td>
+              <td style="font-size:11px;color:var(--text3);">—</td>
+              <td style="font-size:11px;color:var(--text3);">للمتر المربع</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="res" id="${id}-res">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px;">📊 النتيجة</div>
+      <div class="rr"><span>تكلفة المتر المربع</span><span id="${id}-cpm">—</span></div>
+      <div class="rr"><span>إجمالي التكلفة</span><span id="${id}-tcost">—</span></div>
+      <div class="rr"><span>سعر البيع الإجمالي</span><span id="${id}-tsell">—</span></div>
+      <div class="rf"><span>الربح</span><span id="${id}-profit">—</span></div>
+      <div style="margin-top:6px;text-align:left"><span id="${id}-badge"></span></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-p" onclick="transferToQuote('${id}')">نقل لعرض السعر ←</button></div>
+  `;
+  calcGeneric(id);
+}
+
+function calcGeneric(id) {
+  const d = panelData[id];
+  const cfg = PANEL_CONFIG[id];
+  const matPrice  = parseFloat(document.getElementById(id+'-mat-price')?.value)||0;
+  const ironPrice = parseFloat(document.getElementById(id+'-iron-price')?.value)||0;
+  const labor     = parseFloat(document.getElementById(id+'-labor')?.value)||0;
+  const misc      = parseFloat(document.getElementById(id+'-misc')?.value)||0;
+  const matQty    = parseFloat(document.getElementById(id+'-mat-qty')?.value)||0;
+  const ironQty   = parseFloat(document.getElementById(id+'-iron-qty')?.value)||0;
+  const area      = d.area;
+  const sell      = d.sell;
+
+  const matTotal  = matPrice * matQty;
+  const ironTotal = ironPrice * ironQty;
+  const laborTotal= labor * area;
+  const miscTotal = misc * area;
+  const totalCost = matTotal + ironTotal + laborTotal + miscTotal;
+  const costPm    = area > 0 ? totalCost / area : 0;
+  const totalSell = sell * area;
+  const profit    = totalSell - totalCost;
+  const margin    = totalSell > 0 ? profit/totalSell*100 : 0;
+
+  const mt = document.getElementById(id+'-mat-total');
+  const it = document.getElementById(id+'-iron-total');
+  if(mt) mt.textContent = matQty>0 ? fmt(matTotal)+' ج.م ('+matQty+' م²)' : 'أدخل الكمية';
+  if(it) it.textContent = ironQty>0 ? fmt(ironTotal)+' ج.م ('+ironQty+' عود)' : 'أدخل الكمية';
+
+  const set = (sel,val) => { const el=document.getElementById(id+sel); if(el) el.textContent=val; };
+  set('-cpm', fmt(costPm)+' ج.م/م²');
+  set('-tcost', fmt(totalCost)+' ج.م');
+  set('-tsell', fmt(totalSell)+' ج.م');
+  const pe = document.getElementById(id+'-profit');
+  if(pe){pe.textContent=fmt(profit)+' ج.م'; pe.className=profit>=0?'profit':'loss';}
+  setBadge(id+'-badge', margin, totalSell>0);
+  panelCosts[id] = totalCost;
+  updateSummary();
+}
+
+// ===================== LETTERS ACR =====================
+function refreshLASelects() {
+  const asel = document.getElementById('la-acr-sel');
+  const wsel = document.getElementById('la-wood-sel');
+  if(!asel||!wsel) return;
+  const av = asel.value;
+  const wv = wsel.value;
+  asel.innerHTML = mats.acrylic.map((m,i)=>`<option value="${i}">${m.name}${m.note?' — '+m.note:''}</option>`).join('');
+  wsel.innerHTML = mats.wood.map((m,i)=>`<option value="${i}">${m.name}${m.note?' — '+m.note:''}</option>`).join('');
+  if(av) asel.value=av;
+  if(wv) wsel.value=wv;
+  calcLA();
+}
+
+function calcLA() {
+  const meters   = parseFloat(document.getElementById('la-meters')?.value)||0;
+  const sell     = parseFloat(document.getElementById('la-sell')?.value)||0;
+  const sheets   = parseFloat(document.getElementById('la-sheets')?.value)||0;
+  const acrPct   = parseFloat(document.getElementById('la-acrpct')?.value)||75;
+  const woodPct  = parseFloat(document.getElementById('la-woodpct')?.value)||60;
+  const ledTotal = parseFloat(document.getElementById('la-led-total')?.value)||0;
+  const wirePm   = parseFloat(document.getElementById('la-wire-pm')?.value)||2;
+  const labor    = parseFloat(document.getElementById('la-labor')?.value)||0;
+  const acrIdx   = parseInt(document.getElementById('la-acr-sel')?.value)||0;
+  const woodIdx  = parseInt(document.getElementById('la-wood-sel')?.value)||0;
+  const ledPrice = parseFloat(document.getElementById('mat-led')?.value)||0;
+  const transPrice= parseFloat(document.getElementById('mat-trans')?.value)||0;
+  const wirePrice= parseFloat(document.getElementById('mat-wire')?.value)||0;
+  const lpm      = parseFloat(document.getElementById('mat-lpm')?.value)||250;
+
+  const acrSheet = mats.acrylic[acrIdx]?.price||0;
+  const woodSheet= mats.wood[woodIdx]?.price||0;
+
+  const acrCostPm  = meters>0 ? (sheets*acrSheet*acrPct/100)/meters : 0;
+  const woodCostPm = meters>0 ? (sheets*woodSheet*woodPct/100)/meters : 0;
+  const ledCost    = ledTotal * ledPrice;
+  const ledCostPm  = meters>0 ? ledCost/meters : 0;
+  const totalTrans = ledTotal>0 ? Math.ceil(ledTotal/lpm) : 0;
+  const transCostPm= meters>0 ? (totalTrans*transPrice)/meters : 0;
+  const wireCostPm = wirePm * wirePrice;
+  const costPm     = acrCostPm+woodCostPm+ledCostPm+transCostPm+wireCostPm+labor;
+  const totalCost  = costPm*meters;
+  const totalSell  = sell*meters;
+  const profit     = totalSell-totalCost;
+  const margin     = totalSell>0 ? profit/totalSell*100 : 0;
+
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('la-acr-sp', fmt(acrSheet)+' ج.م/لوح');
+  s('la-acr-calc', sheets>0&&meters>0 ? fmt(acrCostPm)+' ج.م/م' : 'أدخل عدد الألواح');
+  s('la-wood-sp', fmt(woodSheet)+' ج.م/لوح');
+  s('la-wood-calc', sheets>0&&meters>0 ? fmt(woodCostPm)+' ج.م/م' : '—');
+  s('la-led-unit', fmt(ledPrice)+' ج.م/ليدة');
+  s('la-led-calc', ledTotal>0 ? fmt(ledCost)+' ج.م إجمالي' : '—');
+  s('la-trans-rule','1 لكل '+lpm+' ليدة');
+  s('la-trans-unit', fmt(transPrice)+' ج.م/محول');
+  s('la-trans-calc', ledTotal>0 ? totalTrans+' محول ← '+fmt(transCostPm)+' ج.م/م' : '—');
+  s('la-wire-unit', fmt(wirePrice)+' ج.م/م');
+  s('la-wire-calc', fmt(wireCostPm)+' ج.م/م');
+  s('la-leds', ledTotal>0 ? ledTotal+' ليدة' : '—');
+  s('la-trans', totalTrans>0 ? totalTrans+' محول' : '—');
+  s('la-cpm', fmt(costPm)+' ج.م/م');
+  s('la-tcost', fmt(totalCost)+' ج.م');
+  s('la-tsell', fmt(totalSell)+' ج.م');
+  const pe=document.getElementById('la-profit');
+  if(pe){pe.textContent=fmt(profit)+' ج.م';pe.className=profit>=0?'profit':'loss';}
+  setBadge('la-badge', margin, totalSell>0);
+  panelCosts.letters_acr = totalCost;
+  updateSummary();
+}
+
+function refreshCalcs() { calcLA(); }
+
+// ===================== SUMMARY =====================
+let _qSell = 0;
+function updateSummary() {
+  const totalCost = Object.values(panelCosts).reduce((a,b)=>a+b,0);
+  const disc = parseFloat(document.getElementById('q-disc')?.value)||0;
+  const grandSell = _qSell - Math.round(_qSell*disc/100);
+  const profit = grandSell - totalCost;
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  s('s-cost', totalCost>0 ? fmt(totalCost)+' ج.م' : '—');
+  s('s-sell', grandSell>0 ? fmt(grandSell)+' ج.م' : '—');
+  const pe=document.getElementById('s-profit');
+  if(pe){
+    if(grandSell>0||totalCost>0){pe.textContent=fmt(profit)+' ج.م';pe.style.color=profit>=0?'var(--green)':'var(--red)';}
+    else{pe.textContent='—';pe.style.color='var(--text2)';}
+  }
+}
+
+// ===================== MATERIALS RENDER =====================
+function renderMats() {
+  ['cladding','forex','iron','acrylic','wood'].forEach(type => {
+    const el = document.getElementById('mat-'+type);
+    if(!el) return;
+    el.innerHTML = '';
+    mats[type].forEach((m,i) => {
+      const row = document.createElement('div');
+      row.className = 'mat-row';
+      row.innerHTML = `
+        <input type="text" value="${m.name}" onchange="mats['${type}'][${i}].name=this.value;refreshAllSelects();" placeholder="الاسم">
+        <input type="text" value="${m.note}" onchange="mats['${type}'][${i}].note=this.value;" placeholder="ملاحظة">
+        <input type="number" value="${m.price}" min="0" onchange="mats['${type}'][${i}].price=parseFloat(this.value)||0;refreshAllSelects();refreshCalcs();" style="text-align:center;">
+        <button class="btn btn-sm btn-d" onclick="removeMat('${type}',${i})">حذف</button>
+      `;
+      el.appendChild(row);
+    });
+  });
+}
+
+function addMat(type) {
+  const defs = {cladding:{name:'خامة جديدة',note:'',price:800},forex:{name:'Forex جديد',note:'',price:300},iron:{name:'حديد جديد',note:'',price:200},acrylic:{name:'أكريليك جديد',note:'',price:3000},wood:{name:'خشب جديد',note:'',price:300}};
+  mats[type].push({...defs[type]});
+  renderMats(); refreshAllSelects();
+}
+
+function removeMat(type,idx) {
+  if(!confirm('حذف؟'))return;
+  mats[type].splice(idx,1);
+  renderMats(); refreshAllSelects();
+}
+
+function refreshAllSelects() {
+  renderMats();
+  // تحديث كل البانلات المبنية
+  ['cladding','forex','stainless'].forEach(id => {
+    const el = document.getElementById(id+'-mat-sel');
+    if(el) buildGenericPanel(id);
+  });
+  refreshLASelects();
+}
+
+// ===================== QUOTE =====================
+function transferToQuote(id) {
+  if(['cladding','forex','stainless'].includes(id)) {
+    const d = panelData[id];
+    const area = d.area; const sell = d.sell;
+    if(!area||!sell){alert('أدخل المساحة وسعر البيع أولاً');return;}
+    const labels={cladding:'كلادينج ACM',forex:'لوحة بلاستيك',stainless:'ستانلس'};
+    pushQ(labels[id]+(d.client?' — '+d.client:''), area, 'م²', sell);
+    if(d.client) document.getElementById('q-client').value=d.client;
+  } else if(id==='letters_acr') {
+    const m=parseFloat(document.getElementById('la-meters')?.value)||0;
+    const sell=parseFloat(document.getElementById('la-sell')?.value)||0;
+    const client=document.getElementById('la-client')?.value||'';
+    if(!m||!sell){alert('أدخل المتر الطولي وسعر البيع أولاً');return;}
+    pushQ('حروف أكريليك'+(client?' — '+client:''), m, 'م طولي', sell);
+    if(client) document.getElementById('q-client').value=client;
+  }
+  openTab('quote'); setStatus('تم النقل لعرض السعر ✓');
+}
+
+function pushQ(desc,qty,unit,price) {
+  quoteItems.push({id:Date.now(),desc,qty,unit,price});
+  renderQ(); calcQ();
+}
+
+function addQItem() { pushQ('بند جديد',1,'وحدة',0); }
+
+function renderQ() {
+  const tb=document.getElementById('q-tbody');
+  tb.innerHTML='';
+  if(!quoteItems.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px;">لا توجد بنود</td></tr>';return;}
+  quoteItems.forEach((item,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input type="text" value="${item.desc}" onchange="quoteItems[${i}].desc=this.value" style="width:100%"></td>
+      <td><input type="number" value="${item.qty}" onchange="quoteItems[${i}].qty=+this.value;calcQ()" style="text-align:center"></td>
+      <td><input type="text" value="${item.unit}" onchange="quoteItems[${i}].unit=this.value" style="text-align:center"></td>
+      <td><input type="number" value="${item.price}" onchange="quoteItems[${i}].price=+this.value;calcQ()" style="text-align:center"></td>
+      <td style="text-align:center;font-weight:600">${fmt(item.qty*item.price)} ج.م</td>
+      <td style="text-align:center"><button class="btn btn-sm" onclick="moveQ(${i},-1)">↑</button></td>
+      <td style="text-align:center"><button class="btn btn-sm btn-d" onclick="removeQ(${i})">✕</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+function removeQ(i){quoteItems.splice(i,1);renderQ();calcQ();}
+function moveQ(i,dir){const j=i+dir;if(j<0||j>=quoteItems.length)return;[quoteItems[i],quoteItems[j]]=[quoteItems[j],quoteItems[i]];renderQ();calcQ();}
+
+function calcQ() {
+  const sub=quoteItems.reduce((s,i)=>s+i.qty*i.price,0);
+  const disc=parseFloat(document.getElementById('q-disc')?.value)||0;
+  const da=Math.round(sub*disc/100);
+  const grand=sub-da;
+  _qSell=sub;
+  document.getElementById('q-sub').textContent=fmt(sub)+' ج.م';
+  document.getElementById('q-grand').textContent=fmt(grand)+' ج.م';
+  document.getElementById('q-disc-row').style.display=disc>0?'':'none';
+  document.getElementById('q-disc-val').textContent='- '+fmt(da)+' ج.م';
+  updateSummary();
+}
+
+// ===================== TABS =====================
+function openTab(name) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  const tabEl=document.getElementById('tab-'+name);
+  if(tabEl) tabEl.classList.add('active');
+  const labels={home:'الرئيسية',materials:'الخامات',quote:'عرض السعر'};
+  document.getElementById('st-mode').textContent=labels[name]||name;
+  document.querySelectorAll('.tree-node').forEach(n=>n.classList.remove('active'));
+}
+
+// ===================== FILE OPS =====================
+function updateTitle() {
+  const clients=[panelData.cladding.client,panelData.forex.client,panelData.stainless.client,document.getElementById('la-client')?.value||''].filter(Boolean);
+  const n=clients[0]||'بدون اسم';
+  document.getElementById('current-file').textContent=n;
+  document.getElementById('st-proj').textContent=n;
+}
+
+function getSnap() {
+  return {v:3, mats, panelData,
+    led:document.getElementById('mat-led').value,
+    trans:document.getElementById('mat-trans').value,
+    wire:document.getElementById('mat-wire').value,
+    lpm:document.getElementById('mat-lpm').value,
+    la:{
+      client:document.getElementById('la-client')?.value||'',
+      meters:document.getElementById('la-meters')?.value||'',
+      height:document.getElementById('la-height')?.value||60,
+      sell:document.getElementById('la-sell')?.value||'',
+      sheets:document.getElementById('la-sheets')?.value||'',
+      acrpct:document.getElementById('la-acrpct')?.value||75,
+      acrSel:document.getElementById('la-acr-sel')?.value||0,
+      woodSel:document.getElementById('la-wood-sel')?.value||0,
+      woodpct:document.getElementById('la-woodpct')?.value||60,
+      ledTotal:document.getElementById('la-led-total')?.value||0,
+      wirePm:document.getElementById('la-wire-pm')?.value||2,
+      labor:document.getElementById('la-labor')?.value||600,
+    },
+    quote:{client:document.getElementById('q-client').value,date:document.getElementById('q-date').value,num:document.getElementById('q-num').value,disc:document.getElementById('q-disc').value,notes:document.getElementById('q-notes').value,items:quoteItems}
+  };
+}
+
+function loadSnap(s) {
+  if(!s||s.v!==3)return;
+  mats=s.mats; panelData=s.panelData;
+  document.getElementById('mat-led').value=s.led||4;
+  document.getElementById('mat-trans').value=s.trans||120;
+  document.getElementById('mat-wire').value=s.wire||15;
+  document.getElementById('mat-lpm').value=s.lpm||250;
+  if(s.la){
+    const la=s.la;
+    const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+    sv('la-client',la.client);sv('la-meters',la.meters);sv('la-height',la.height);
+    sv('la-sell',la.sell);sv('la-sheets',la.sheets);sv('la-acrpct',la.acrpct);
+    sv('la-woodpct',la.woodpct);sv('la-led-total',la.ledTotal);
+    sv('la-wire-pm',la.wirePm);sv('la-labor',la.labor);
+  }
+  const q=s.quote;
+  document.getElementById('q-client').value=q.client||'';
+  document.getElementById('q-date').value=q.date||'';
+  document.getElementById('q-num').value=q.num||'';
+  document.getElementById('q-disc').value=q.disc||0;
+  document.getElementById('q-notes').value=q.notes||'';
+  quoteItems=q.items||[];
+  renderMats(); renderQ(); calcQ();
+  updateTitle();
+}
+
+function newFile(){if(!confirm('مشروع جديد؟'))return;panelData={cladding:{client:'',area:0,sell:0,matIdx:0,ironIdx:0,matQty:0,ironQty:0,labor:500,misc:50},forex:{client:'',area:0,sell:0,matIdx:0,ironIdx:0,matQty:0,ironQty:0,labor:300,misc:30},stainless:{client:'',area:0,sell:0,matIdx:0,ironIdx:0,matQty:0,ironQty:0,labor:800,misc:50}};quoteItems=[];renderQ();calcQ();document.getElementById('current-file').textContent='بدون اسم';setStatus('مشروع جديد');}
+
+function saveFile(){
+  const s=getSnap();
+  const name=[panelData.cladding.client,panelData.forex.client,document.getElementById('la-client')?.value||''].filter(Boolean)[0]||'مشروع';
+  const blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='سعر_'+name+'_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  setStatus('تم الحفظ ✓');
+}
+
+function openFile(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{loadSnap(JSON.parse(ev.target.result));setStatus('تم الفتح: '+f.name);}catch{alert('ملف غير صالح');}};r.readAsText(f);};
+  inp.click();
+}
+
+// ===================== PRINT =====================
+function printQuote(){
+  const client=document.getElementById('q-client').value||'العميل';
+  const date=document.getElementById('q-date').value||'';
+  const num=document.getElementById('q-num').value||'';
+  const notes=document.getElementById('q-notes').value||'';
+  const disc=parseFloat(document.getElementById('q-disc').value)||0;
+  const sub=quoteItems.reduce((s,i)=>s+i.qty*i.price,0);
+  const da=Math.round(sub*disc/100);
+  const grand=sub-da;
+  const rows=quoteItems.map((item,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${item.desc}</td><td style="text-align:center">${item.qty}</td><td style="text-align:center">${item.unit}</td><td style="text-align:left">${fmt(item.price)} ج.م</td><td style="text-align:left;font-weight:700">${fmt(item.qty*item.price)} ج.م</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:13px;color:#111;padding:2cm;}.hdr{display:flex;justify-content:space-between;border-bottom:3px solid #F47920;padding-bottom:16px;margin-bottom:24px;}.co{font-size:20px;font-weight:700;color:#F47920;}.meta{text-align:left;font-size:12px;color:#555;line-height:1.9;}h2{font-size:14px;margin-bottom:10px;}table{width:100%;border-collapse:collapse;margin-bottom:16px;}th{background:#f5f5f5;border:1px solid #ddd;padding:6px 9px;font-size:12px;}td{border:1px solid #eee;padding:6px 9px;}.tots{max-width:280px;margin-right:auto;}.tr{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px dashed #eee;}.gd{display:flex;justify-content:space-between;padding:8px 0 0;font-size:16px;font-weight:700;border-top:2px solid #333;margin-top:6px;}.notes{background:#f9f9f9;border-right:3px solid #F47920;padding:10px 14px;font-size:12px;color:#555;margin-top:16px;}.footer{text-align:center;margin-top:24px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:10px;}</style></head><body><div class="hdr"><div><div class="co">سامي الزيني للدعاية والإعلان</div><div style="font-size:11px;color:#666;margin-top:3px;">بورسعيد، مصر — تأسست 1985</div></div><div class="meta"><div><b>رقم العرض:</b> ${num||'—'}</div><div><b>التاريخ:</b> ${date}</div><div><b>مقدم لـ:</b> ${client}</div></div></div><h2>بنود عرض السعر</h2><table><thead><tr><th>#</th><th>الوصف</th><th>الكمية</th><th>الوحدة</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead><tbody>${rows}</tbody></table><div class="tots"><div class="tr"><span>الإجمالي</span><span>${fmt(sub)} ج.م</span></div>${disc>0?'<div class="tr"><span>خصم '+disc+'%</span><span>- '+fmt(da)+' ج.م</span></div>':''}<div class="gd"><span>الإجمالي النهائي</span><span>${fmt(grand)} ج.م</span></div></div>${notes?'<div class="notes"><b>ملاحظات:</b><br>'+notes+'</div>':''}<div class="footer">سامي الزيني للدعاية والإعلان — بورسعيد — العرض صالح 15 يوم من تاريخه</div></body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();w.print();
+}
+
+// ===================== AI ASSISTANT =====================
+let recognition=null, isRec=false;
+
+function toggleMic(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('استخدم Chrome للتعرف على الصوت');return;}
+  if(isRec){recognition.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();recognition.lang='ar-EG';recognition.continuous=false;recognition.interimResults=false;
+  recognition.onstart=()=>{isRec=true;document.getElementById('mic-btn').classList.add('rec');document.getElementById('mic-btn').textContent='⏹';document.getElementById('ai-status').textContent='🔴 يسمع...';};
+  recognition.onresult=e=>{document.getElementById('ai-input').value=e.results[0][0].transcript;sendAI();};
+  recognition.onerror=stopMic;recognition.onend=stopMic;
+  recognition.start();
+}
+function stopMic(){isRec=false;const b=document.getElementById('mic-btn');b.classList.remove('rec');b.textContent='🎤';document.getElementById('ai-status').textContent='جاهز';}
+
+async function sendAI(){
+  const input=document.getElementById('ai-input').value.trim();
+  if(!input)return;
+  document.getElementById('ai-status').textContent='⏳ يفكر...';
+
+  const matsList = {
+    cladding: mats.cladding.map((m,i)=>`${i}:${m.name}(${m.price}ج.م)`).join('،'),
+    forex: mats.forex.map((m,i)=>`${i}:${m.name}(${m.price}ج.م)`).join('،'),
+    iron: mats.iron.map((m,i)=>`${i}:${m.name}(${m.price}ج.م)`).join('،'),
+    acrylic: mats.acrylic.map((m,i)=>`${i}:${m.name}(${m.price}ج.م)`).join('،'),
+    wood: mats.wood.map((m,i)=>`${i}:${m.name}(${m.price}ج.م)`).join('،'),
+    led: document.getElementById('mat-led').value,
+    trans: document.getElementById('mat-trans').value,
+    wire: document.getElementById('mat-wire').value,
+  };
+
+  const sys=`أنت مساعد ذكي لنظام تسعير شركة "سامي الزيني للدعاية والإعلان" في بورسعيد.
+
+الخامات الحالية:
+- كلادينج: ${matsList.cladding}
+- forex: ${matsList.forex}  
+- حديد: ${matsList.iron}
+- أكريليك: ${matsList.acrylic}
+- خشب: ${matsList.wood}
+- ليد: ${matsList.led}ج.م/ليدة | محول: ${matsList.trans}ج.م | أسلاك: ${matsList.wire}ج.م/م
+
+أنواع المشاريع: cladding(كلادينج م²) | forex(بلاستيك م²) | stainless(ستانلس م²) | letters_acr(حروف أكريليك م طولي)
+
+ارجع JSON فقط بالشكل:
+{
+  "action": "open_tab" | "update_price" | "add_mat" | "ask" | "info",
+  "tab": "cladding"|"forex"|"stainless"|"letters_acr",
+  "data": {"client":"","area":null,"meters":null,"sell":null},
+  "update_price": {"type":"cladding"|"forex"|"iron"|"acrylic"|"wood"|"led"|"trans"|"wire", "index":0, "price":0},
+  "add_mat": {"type":"cladding"|"forex"|"iron"|"acrylic"|"wood", "name":"", "note":"", "price":0},
+  "missing": [],
+  "message": ""
+}
+action=open_tab: افتح صفحة وحط البيانات
+action=update_price: عدّل سعر خامة موجودة
+action=add_mat: أضف خامة جديدة
+action=ask: اسأل سؤال واحد
+action=info: معلومة عامة`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:sys,messages:[{role:'user',content:input}]})});
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'';
+    let parsed=null;
+    try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}catch{}
+
+    if(parsed){
+      if(parsed.action==='open_tab'&&parsed.tab){
+        openNode(parsed.tab);
+        const d=parsed.data||{};
+        if(['cladding','forex','stainless'].includes(parsed.tab)){
+          if(d.client) panelData[parsed.tab].client=d.client;
+          if(d.area)   panelData[parsed.tab].area=d.area;
+          if(d.sell)   panelData[parsed.tab].sell=d.sell;
+          buildGenericPanel(parsed.tab);
+        } else if(parsed.tab==='letters_acr'){
+          if(d.client){const el=document.getElementById('la-client');if(el)el.value=d.client;}
+          if(d.meters){const el=document.getElementById('la-meters');if(el)el.value=d.meters;}
+          if(d.sell){const el=document.getElementById('la-sell');if(el)el.value=d.sell;}
+          calcLA();
+        }
+        markMissing(parsed.tab, parsed.missing||[]);
+        document.getElementById('ai-status').textContent='✅ تم';
+      } else if(parsed.action==='update_price'&&parsed.update_price){
+        const up=parsed.update_price;
+        if(up.type==='led') document.getElementById('mat-led').value=up.price;
+        else if(up.type==='trans') document.getElementById('mat-trans').value=up.price;
+        else if(up.type==='wire') document.getElementById('mat-wire').value=up.price;
+        else if(mats[up.type]&&mats[up.type][up.index]!==undefined){
+          mats[up.type][up.index].price=up.price;
+          renderMats();
+          ['cladding','forex','stainless'].forEach(id=>{if(document.getElementById(id+'-mat-sel'))buildGenericPanel(id);});
+          refreshLASelects();
+        }
+        refreshCalcs();
+        openTab('materials');
+        document.getElementById('ai-status').textContent='✅ السعر اتعدّل';
+      } else if(parsed.action==='add_mat'&&parsed.add_mat){
+        const am=parsed.add_mat;
+        mats[am.type].push({name:am.name,note:am.note||'',price:am.price});
+        renderMats(); refreshAllSelects();
+        openTab('materials');
+        document.getElementById('ai-status').textContent='✅ تم الإضافة';
+      } else {
+        document.getElementById('ai-status').textContent=parsed.message||'تم';
+        if(parsed.message) alert(parsed.message);
+      }
+    } else {
+      document.getElementById('ai-status').textContent='⚠️ محتاج إنترنت';
+    }
+  }catch{document.getElementById('ai-status').textContent='⚠️ خطأ في الاتصال';}
+  document.getElementById('ai-input').value='';
+}
+
+function markMissing(tab, missing){
+  document.querySelectorAll('.missing').forEach(el=>{el.classList.remove('missing');});
+  const map={
+    cladding:{'المساحة':tab+'-area','سعر البيع':tab+'-sell','الخامة':tab+'-mat-sel','الحديد':tab+'-iron-sel'},
+    forex:{'المساحة':tab+'-area','سعر البيع':tab+'-sell'},
+    stainless:{'المساحة':tab+'-area','سعر البيع':tab+'-sell'},
+    letters_acr:{'المتر الطولي':'la-meters','سعر البيع':'la-sell','عدد الألواح':'la-sheets'},
+  };
+  const m=map[tab]||{};
+  missing.forEach(f=>{const id=m[f];if(!id)return;const el=document.getElementById(id);if(el)el.classList.add('missing');});
+}
+
+// ===================== HELPERS =====================
+function fmt(n){return Math.round(n).toLocaleString('en-US');}
+function setStatus(msg){document.getElementById('st-msg').textContent=msg;}
+function setBadge(id,margin,show){
+  const el=document.getElementById(id);if(!el)return;
+  if(!show){el.textContent='';return;}
+  el.textContent='هامش الربح: '+margin.toFixed(1)+'%';
+  el.className='badge '+(margin>=30?'bg-g':margin>=15?'bg-o':'bg-r');
+}
+
+// ===================== INIT =====================
+buildTree();
+renderMats();
+refreshLASelects();
+document.getElementById('q-date').value=new Date().toLocaleDateString('ar-EG');
+document.getElementById('q-num').value='2026-'+String(Math.floor(Math.random()*900)+100);
+renderQ();
+</script>
+</body>
+</html>
